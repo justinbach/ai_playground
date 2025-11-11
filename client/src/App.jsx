@@ -6,7 +6,9 @@ import rehypeSanitize from 'rehype-sanitize'
 import './App.css'
 
 function App() {
-  const [messages, setMessages] = useState([])
+  const [messages, setMessages] = useState([
+    { user: '', ai: 'How can I help you today?' }
+  ])
   const [userMessage, setUserMessage] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const messagesRef = useRef(null)
@@ -28,8 +30,9 @@ function App() {
     try {
       const historyTurns = messages.slice(-10)
       const chatMessages = historyTurns.flatMap((m) => {
-        const arr = [{ role: 'user', content: m.user }]
-        if (m.ai) arr.push({ role: 'assistant', content: m.ai })
+        const arr = []
+        if (m.user && m.user.trim()) arr.push({ role: 'user', content: m.user })
+        if (m.ai && m.ai.trim()) arr.push({ role: 'assistant', content: m.ai })
         return arr
       })
       chatMessages.push({ role: 'user', content: text })
@@ -75,7 +78,9 @@ function App() {
         <div className="messages" ref={messagesRef}>
           {messages.map((message, index) => (
             <div key={index} className="message">
-              <div className="bubble user">{message.user}</div>
+              {message.user ? (
+                <div className="bubble user">{message.user}</div>
+              ) : null}
               <div className={`bubble ai${isLoading && index === messages.length - 1 && !message.ai ? ' typing-bubble' : ''}`}>
                 {message.ai ? (
                   <div className="md">
