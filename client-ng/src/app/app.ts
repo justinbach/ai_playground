@@ -17,13 +17,14 @@ export class App implements AfterViewChecked {
   messages: ChatTurn[] = [{ user: '', ai: 'How can I help you today?' }];
   userMessage = '';
   isLoading = false;
+  private autoScroll = true;
 
   @ViewChild('messagesRef') messagesRef!: ElementRef<HTMLDivElement>;
 
   constructor(private chat: ChatService) {}
 
   ngAfterViewChecked(): void {
-    this.scrollToBottom();
+    if (this.autoScroll) this.scrollToBottom();
   }
 
   private scrollToBottom() {
@@ -34,10 +35,19 @@ export class App implements AfterViewChecked {
     });
   }
 
+  onMessagesScroll() {
+    const el = this.messagesRef?.nativeElement;
+    if (!el) return;
+    const threshold = 48;
+    const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - threshold;
+    this.autoScroll = atBottom;
+  }
+
   async submitMessage() {
     const text = this.userMessage.trim();
     if (!text || this.isLoading) return;
 
+    this.autoScroll = true;
     this.messages = [...this.messages, { user: text, ai: '' }];
     this.isLoading = true;
 

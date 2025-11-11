@@ -3,7 +3,7 @@
 </header>
 
 <div class="chat">
-  <div #messagesRef class="messages">
+  <div #messagesRef class="messages" (scroll)="onMessagesScroll()">
     <div class="message" *ngFor="let m of messages; index as i; trackBy: trackByIndex">
       <div class="bubble user" *ngIf="m.user">{{ m.user }}</div>
 
