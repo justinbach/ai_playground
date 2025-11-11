@@ -14,14 +14,21 @@ const client = new OpenAI({
 });
 
 app.post("/api/chat", async (req, res) => {
-  const { message } = req.body || {};
-  if (typeof message !== "string" || !message.trim()) {
-    return res.status(400).json({ error: "message is required" });
+  const { message, messages } = req.body || {};
+
+  let chatMessages;
+  if (Array.isArray(messages) && messages.length > 0) {
+    chatMessages = messages;
+  } else if (typeof message === "string" && message.trim()) {
+    chatMessages = [{ role: "user", content: message }];
+  } else {
+    return res.status(400).json({ error: "Provide either 'message' or 'messages'" });
   }
+
   try {
     const completion = await client.chat.completions.create({
       model: "gpt-4o-mini",
-      messages: [{ role: "user", content: message }],
+      messages: chatMessages,
     });
     const reply = completion.choices?.[0]?.message?.content ?? "";
     return res.json({ reply });

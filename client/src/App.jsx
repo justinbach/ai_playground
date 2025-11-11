@@ -6,11 +6,13 @@ function App() {
   const [messages, setMessages] = useState([])
   const [userMessage, setUserMessage] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const bottomRef = useRef(null)
+  const messagesRef = useRef(null)
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, isLoading])
+    const el = messagesRef.current
+    if (!el) return
+    el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
+  }, [messages.length, isLoading])
 
   const submitMessage = async () => {
     const text = userMessage.trim()
@@ -21,9 +23,17 @@ function App() {
     setIsLoading(true)
 
     try {
+      const historyTurns = messages.slice(-10)
+      const chatMessages = historyTurns.flatMap((m) => {
+        const arr = [{ role: 'user', content: m.user }]
+        if (m.ai) arr.push({ role: 'assistant', content: m.ai })
+        return arr
+      })
+      chatMessages.push({ role: 'user', content: text })
+
       const response = await axios.post(
         'http://localhost:3001/api/chat',
-        { message: text }
+        { messages: chatMessages }
       )
       const reply = response.data.reply
       // Fill in AI reply for the last message
@@ -59,7 +69,7 @@ function App() {
         <h1 className="app-title">MessageGPT</h1>
       </header>
       <div className="chat">
-        <div className="messages">
+        <div className="messages" ref={messagesRef}>
           {messages.map((message, index) => (
             <div key={index} className="message">
               <div className="bubble user">{message.user}</div>
@@ -80,12 +90,21 @@ function App() {
           ))}
         </div>
         <form onSubmit={handleSubmit} className="composer">
-          <input
-            type="text"
+          <textarea
             value={userMessage}
             onChange={(event) => setUserMessage(event.target.value)}
-            placeholder="Type your message..."
-            className="input"
+            onKeyDown={(e) => {
+              if (isLoading) return
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                submitMessage()
+              }
+            }}
+            placeholder="Type your message… Press Enter to send, Shift+Enter for newline"
+            className="input textarea"
+            rows={1}
+            disabled={isLoading}
+            aria-disabled={isLoading}
           />
           <button
             type="submit"
@@ -97,7 +116,7 @@ function App() {
         </form>
       </div>
       <footer className="app-footer">
-        <span>© 2025 Justin Bachorik</span>
+        <span> 2025 Justin Bachorik</span>
       </footer>
     </>
   )
