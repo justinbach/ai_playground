@@ -58,6 +58,7 @@
   flex: 1;
   min-height: 0; /* critical for flex scroll containers */
   overflow-y: auto;
+  overflow-x: hidden; /* prevent horizontal scroll */
   padding: 8px 0;
   width: 100%;
   scrollbar-gutter: stable both-edges;
@@ -78,7 +79,9 @@
   max-width: 72%;
   position: relative;
   word-wrap: break-word;
+  overflow-wrap: anywhere;
   white-space: pre-wrap;
+  hyphens: auto;
 }
 
 .bubble.user {
@@ -126,9 +129,9 @@
   line-height: 1.2;
 }
 
-.md code { background: rgba(0,0,0,0.08); padding: 0.1em 0.3em; border-radius: 4px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.95em; }
-.md pre { background: rgba(0,0,0,0.08); padding: 10px; border-radius: 8px; overflow: auto; margin: 0.4em 0; }
-.md a { color: #0b5bd3; text-decoration: underline; }
+.md code { background: rgba(0,0,0,0.08); padding: 0.1em 0.3em; border-radius: 4px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.95em; white-space: pre-wrap; word-break: break-word; }
+.md pre { background: rgba(0,0,0,0.08); padding: 10px; border-radius: 8px; overflow: auto; overflow-x: auto; margin: 0.4em 0; max-width: 100%; box-sizing: border-box; }
+.md a { color: #0b5bd3; text-decoration: underline; word-break: break-word; overflow-wrap: anywhere; }
 
 /* Typing indicator */
 .typing {
