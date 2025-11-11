@@ -1,13 +1,53 @@
 import dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 import OpenAI from "openai";
 
 dotenv.config();
 
 const app = express();
-app.use(cors());
-app.use(express.json());
+
+// CORS allowlist from env (comma-separated). Example: https://yourapp.com,https://www.yourapp.com
+const allowlist = (process.env.ORIGIN_ALLOWLIST || "http://localhost:5173,http://localhost:3000").split(",").map(s => s.trim());
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow non-browser requests with no origin (curl, server-to-server)
+      if (!origin) return callback(null, true);
+      if (allowlist.includes(origin)) return callback(null, true);
+      return callback(new Error("Not allowed by CORS"));
+    },
+    methods: ["POST"],
+  })
+);
+
+// Security headers
+app.use(helmet());
+
+// Parse JSON with a small limit to prevent abuse
+app.use(express.json({ limit: "10kb" }));
+
+// Basic IP rate limiting
+const limiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use("/api/", limiter);
+
+// Optional server-side API key check (set SERVER_API_KEY to enable)
+app.use((req, res, next) => {
+  const serverKey = process.env.SERVER_API_KEY;
+  if (!serverKey) return next();
+  const auth = req.get("authorization") || req.get("Authorization");
+  if (!auth || !auth.startsWith("Bearer ") || auth.slice(7) !== serverKey) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  next();
+});
 
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
