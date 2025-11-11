@@ -1,5 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import rehypeSanitize from 'rehype-sanitize'
 import './App.css'
 
 function App() {
@@ -75,7 +78,14 @@ function App() {
               <div className="bubble user">{message.user}</div>
               <div className={`bubble ai${isLoading && index === messages.length - 1 && !message.ai ? ' typing-bubble' : ''}`}>
                 {message.ai ? (
-                  message.ai
+                  <div className="md">
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      rehypePlugins={[rehypeSanitize]}
+                    >
+                      {message.ai}
+                    </ReactMarkdown>
+                  </div>
                 ) : (
                   isLoading && index === messages.length - 1 ? (
                     <span className="typing" aria-label="Assistant is typing" aria-live="polite">
