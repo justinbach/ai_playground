@@ -13,10 +13,16 @@ function App() {
   const [isLoading, setIsLoading] = useState(false)
   const messagesRef = useRef(null)
 
-  useEffect(() => {
+  const scrollToBottom = () => {
     const el = messagesRef.current
     if (!el) return
-    el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
+    requestAnimationFrame(() => {
+      el.scrollTop = el.scrollHeight
+    })
+  }
+
+  useEffect(() => {
+    scrollToBottom()
   }, [messages.length, isLoading])
 
   const submitMessage = async () => {
@@ -25,6 +31,7 @@ function App() {
 
     // Optimistically append user message and show typing
     setMessages((prev) => [...prev, { user: text, ai: '' }])
+    scrollToBottom()
     setIsLoading(true)
 
     try {
@@ -37,19 +44,47 @@ function App() {
       })
       chatMessages.push({ role: 'user', content: text })
 
-      const response = await axios.post(
-        'http://localhost:3001/api/chat',
-        { messages: chatMessages }
-      )
-      const reply = response.data.reply
-      // Fill in AI reply for the last message
-      setMessages((prev) => {
-        const next = [...prev]
-        const lastIndex = next.length - 1
-        if (lastIndex >= 0) next[lastIndex] = { ...next[lastIndex], ai: reply }
-        return next
+      const resp = await fetch('http://localhost:3001/api/chat/stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: chatMessages }),
       })
+      if (!resp.ok || !resp.body) throw new Error('Stream failed')
+
+      const reader = resp.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+
+      while (true) {
+        const { value, done } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
+
+        let sep
+        while ((sep = buffer.indexOf('\n\n')) !== -1) {
+          const chunk = buffer.slice(0, sep)
+          buffer = buffer.slice(sep + 2)
+          const line = chunk.trim()
+          if (!line.startsWith('data:')) continue
+          const payload = line.slice(5).trim()
+          if (payload === '[DONE]') {
+            break
+          }
+          let delta = ''
+          try { delta = JSON.parse(payload) } catch { delta = payload }
+          if (delta) {
+            setMessages((prev) => {
+              const next = [...prev]
+              const lastIndex = next.length - 1
+              if (lastIndex >= 0) next[lastIndex] = { ...next[lastIndex], ai: (next[lastIndex].ai || '') + delta }
+              return next
+            })
+            scrollToBottom()
+          }
+        }
+      }
       setUserMessage('')
+      scrollToBottom()
     } catch (error) {
       console.error(error)
       // Show error in AI bubble, keep input for correction

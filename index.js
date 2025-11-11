@@ -78,6 +78,55 @@ app.post("/api/chat", async (req, res) => {
   }
 });
 
+// Stream responses via Server-Sent Events (SSE)
+app.post("/api/chat/stream", async (req, res) => {
+  const { message, messages } = req.body || {};
+
+  let chatMessages;
+  if (Array.isArray(messages) && messages.length > 0) {
+    chatMessages = messages;
+  } else if (typeof message === "string" && message.trim()) {
+    chatMessages = [{ role: "user", content: message }];
+  } else {
+    return res.status(400).json({ error: "Provide either 'message' or 'messages'" });
+  }
+
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.flushHeaders?.();
+
+  const send = (payload) => {
+    res.write(`data: ${payload}\n\n`);
+  };
+
+  try {
+    const stream = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: chatMessages,
+      stream: true,
+    });
+
+    for await (const chunk of stream) {
+      const delta = chunk?.choices?.[0]?.delta?.content;
+      if (delta) send(JSON.stringify(delta));
+    }
+    // Signal completion
+    res.write("event: done\n");
+    send("[DONE]");
+    res.end();
+  } catch (err) {
+    console.error("OpenAI stream error:", err?.response?.data || err.message || err);
+    if (!res.headersSent) {
+      return res.status(500).json({ error: "Failed to stream completion" });
+    }
+    // Best-effort error event if headers already sent
+    res.write("event: error\n");
+    send(JSON.stringify("stream_error"));
+    res.end();
+  }
+});
+
 const PORT = process.env.PORT ? Number(process.env.PORT) : 3001;
 app.listen(PORT, () => {
   console.log(`Server listening on http://localhost:${PORT}`);
