@@ -1,0 +1,53 @@
+<header class="app-header">
+  <h1 class="app-title">{{ title() }}</h1>
+</header>
+
+<div class="chat">
+  <div #messagesRef class="messages">
+    <div class="message" *ngFor="let m of messages; index as i; trackBy: trackByIndex">
+      <div class="bubble user" *ngIf="m.user">{{ m.user }}</div>
+
+      <div class="bubble ai" [ngClass]="{'typing-bubble': isLoading && i === messages.length - 1 && !m.ai}">
+        <div class="md" *ngIf="m.ai; else typingTpl">
+          <markdown [data]="m.ai"></markdown>
+        </div>
+        <ng-template #typingTpl>
+          <span class="typing" *ngIf="isLoading && i === messages.length - 1" aria-label="Assistant is typing" aria-live="polite">
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+          </span>
+        </ng-template>
+      </div>
+    </div>
+  </div>
+
+  <form class="composer" (ngSubmit)="submitMessage()">
+    <textarea
+      [(ngModel)]="userMessage"
+      name="userMessage"
+      (keydown)="handleKeydown($event)"
+      placeholder="Type your message… Press Enter to send, Shift+Enter for newline"
+      class="input textarea"
+      rows="1"
+      [disabled]="isLoading"
+      [attr.aria-disabled]="isLoading"
+    ></textarea>
+
+    <button
+      type="submit"
+      class="send"
+      [class.loading]="isLoading"
+      [disabled]="isLoading || !userMessage.trim()"
+    >
+      <ng-container *ngIf="isLoading; else sendLabel">
+        <span class="spinner" aria-hidden="true"></span> Sending…
+      </ng-container>
+      <ng-template #sendLabel>Send</ng-template>
+    </button>
+  </form>
+</div>
+
+<footer class="app-footer">
+  <span> 2025 Justin Bachorik</span>
+</footer>

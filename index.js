@@ -10,7 +10,7 @@ dotenv.config();
 const app = express();
 
 // CORS allowlist from env (comma-separated). Example: https://yourapp.com,https://www.yourapp.com
-const allowlist = (process.env.ORIGIN_ALLOWLIST || "http://localhost:5173,http://localhost:3000").split(",").map(s => s.trim());
+const allowlist = (process.env.ORIGIN_ALLOWLIST || "http://localhost:5173,http://localhost:3000,http://localhost:4200").split(",").map(s => s.trim());
 app.use(
   cors({
     origin: (origin, callback) => {
