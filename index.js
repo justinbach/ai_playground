@@ -9,6 +9,9 @@ dotenv.config();
 
 const app = express();
 
+// Behind Render's proxy, enable trust proxy so rate limiting and IP detection work
+app.set("trust proxy", 1);
+
 // CORS allowlist from env (comma-separated). Example: https://yourapp.com,https://www.yourapp.com
 const allowlist = (process.env.ORIGIN_ALLOWLIST || "http://localhost:5173,http://localhost:3000,http://localhost:4200").split(",").map(s => s.trim());
 app.use(

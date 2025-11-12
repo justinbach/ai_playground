@@ -44,9 +44,12 @@ function App() {
       })
       chatMessages.push({ role: 'user', content: text })
       const apiBase = import.meta.env.VITE_API_BASE_URL || window.location.origin
+      const authHeader = import.meta.env.VITE_SERVER_API_KEY
+        ? { Authorization: `Bearer ${import.meta.env.VITE_SERVER_API_KEY}` }
+        : {}
       const resp = await fetch(`${apiBase}/api/chat/stream`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeader },
         body: JSON.stringify({ messages: chatMessages }),
       })
       if (!resp.ok || !resp.body) throw new Error('Stream failed')
