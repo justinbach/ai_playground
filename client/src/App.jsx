@@ -43,8 +43,8 @@ function App() {
         return arr
       })
       chatMessages.push({ role: 'user', content: text })
-
-      const resp = await fetch('http://localhost:3001/api/chat/stream', {
+      const apiBase = import.meta.env.VITE_API_BASE_URL || window.location.origin
+      const resp = await fetch(`${apiBase}/api/chat/stream`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: chatMessages }),

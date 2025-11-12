@@ -1,0 +1,10 @@
+node_modules
+client/node_modules
+client-ng/node_modules
+client/dist
+client-ng/dist
+.git
+.gitignore
+.DS_Store
+npm-debug.log
+.env
