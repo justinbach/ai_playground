@@ -12,10 +12,10 @@ services:
         value: https://ai-playground-web.onrender.com
       - key: SERVER_API_KEY
         generateValue: true
-  - type: static
+  - type: static_site
     name: ai-playground-web
     buildCommand: cd client && npm ci && npm run build
-    publishDir: client/dist
+    publishPath: client/dist
     envVars:
       - key: VITE_API_BASE_URL
         fromService:
