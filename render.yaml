@@ -10,16 +10,11 @@ services:
         sync: false
       - key: ORIGIN_ALLOWLIST
         value: https://ai-playground-web.onrender.com
-      - key: SERVER_API_KEY
-        generateValue: true
   - type: web
     name: ai-playground-web
     env: static
-    buildCommand: cd client && npm ci && VITE_API_BASE_URL="https://$API_HOST" npm run build
+    buildCommand: cd client && npm ci && npm run build
     staticPublishPath: client/dist
     envVars:
-      - key: API_HOST
-        fromService:
-          type: web
-          name: ai-playground-api
-          property: host
+      - key: VITE_API_BASE_URL
+        value: https://ai-playground-api.onrender.com
